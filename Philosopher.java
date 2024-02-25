@@ -6,7 +6,7 @@ public class Philosopher implements Runnable {
     private Fork forkA;
     private Fork forkB;
     private CountDownLatch cdl;
-    private volatile int cnt = 3;
+    private int cnt = 3;
 
     public Philosopher(String name, Fork forkA, Fork forkB, CountDownLatch cdl) {
         this.name = name;
