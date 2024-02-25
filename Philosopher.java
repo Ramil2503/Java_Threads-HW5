@@ -20,7 +20,7 @@ public class Philosopher implements Runnable {
         try {
             getReady();
             cdl.await();
-            eating();
+            eatingLoop();
             finish();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -33,19 +33,25 @@ public class Philosopher implements Runnable {
         System.out.println(name + " is ready");
     }
 
-    private void eating() throws InterruptedException {
+    private void eatingLoop() throws InterruptedException {
         while (cnt > 0) {
-            Thread.sleep(500);
-            if (forkA.isAvailable() && forkB.isAvailable()) {
-                forkA.setAvailable(false);
-                forkB.setAvailable(false);
-                System.out.println(name + " began eating. Using forks: " + forkA.getName() + ", " + forkB.getName());
-                Thread.sleep(1000 + new Random().nextInt(100, 2000));
-                cnt--;
-                System.out.println(name + " ate enough and now resting. Puting back forks: " + forkA.getName() + ", " + forkB.getName());
-                forkA.setAvailable(true);
-                forkB.setAvailable(true);
-            }
+            eating();
+            Thread.sleep(100);
+        }
+    }
+
+    private synchronized void eating() throws InterruptedException {
+        Thread.sleep(500);
+        if (forkA.isAvailable() && forkB.isAvailable()) {
+            forkA.setAvailable(false);
+            forkB.setAvailable(false);
+            System.out.println(name + " began eating. Using forks: " + forkA.getName() + ", " + forkB.getName());
+            Thread.sleep(1000 + new Random().nextInt(100, 2000));
+            cnt--;
+            System.out.println(name + " ate enough and now resting. Puting back forks: " + forkA.getName() + ", "
+                    + forkB.getName());
+            forkA.setAvailable(true);
+            forkB.setAvailable(true);
         }
     }
 
