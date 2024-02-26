@@ -1,5 +1,7 @@
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Philosopher implements Runnable {
     private String name;
@@ -7,6 +9,7 @@ public class Philosopher implements Runnable {
     private Fork forkB;
     private CountDownLatch cdl;
     private int cnt = 3;
+    private static final Lock forkLock = new ReentrantLock();
 
     public Philosopher(String name, Fork forkA, Fork forkB, CountDownLatch cdl) {
         this.name = name;
@@ -35,24 +38,35 @@ public class Philosopher implements Runnable {
 
     private void eatingLoop() throws InterruptedException {
         while (cnt > 0) {
-            eating();
+            if (isForksAvailable()) {
+                eating();
+            }
             Thread.sleep(100);
         }
     }
 
-    private synchronized void eating() throws InterruptedException {
-        Thread.sleep(500);
-        if (forkA.isAvailable() && forkB.isAvailable()) {
-            forkA.setAvailable(false);
-            forkB.setAvailable(false);
-            System.out.println(name + " began eating. Using forks: " + forkA.getName() + ", " + forkB.getName());
-            Thread.sleep(1000 + new Random().nextInt(100, 2000));
-            cnt--;
-            System.out.println(name + " ate enough and now resting. Puting back forks: " + forkA.getName() + ", "
-                    + forkB.getName());
-            forkA.setAvailable(true);
-            forkB.setAvailable(true);
+    private boolean isForksAvailable() throws InterruptedException {
+        synchronized (forkLock) {
+            if (forkA.isAvailable() && forkB.isAvailable()) {
+                forkA.setAvailable(false);
+                forkB.setAvailable(false);
+                return true;
+            }
+            return false;
         }
+    }
+
+    private void eating() throws InterruptedException {
+        Thread.sleep(500);
+
+        System.out.println(name + " began eating. Using forks: " + forkA.getName() + ", " + forkB.getName());
+        Thread.sleep(1000 + new Random().nextInt(100, 2000));
+        cnt--;
+        System.out.println(name + " ate enough and now resting. Puting back forks: " + forkA.getName() + ", "
+                + forkB.getName());
+        forkA.setAvailable(true);
+        forkB.setAvailable(true);
+
     }
 
     private void finish() {
